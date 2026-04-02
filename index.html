@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ArtaFlow – Financial Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --blue: #1E9DE5;
+    --blue-dark: #1580C8;
+    --blue-light: #E8F5FF;
+    --blue-mid: #B8DCFF;
+    --white: #FFFFFF;
+    --gray-50: #F8FAFC;
+    --gray-100: #F1F5F9;
+    --gray-200: #E2E8F0;
+    --gray-300: #CBD5E1;
+    --gray-500: #64748B;
+    --gray-700: #334155;
+    --gray-900: #0F172A;
+    --green: #10B981;
+    --green-light: #D1FAE5;
+    --red: #EF4444;
+    --red-light: #FEE2E2;
+    --orange: #F59E0B;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow: 0 4px 16px rgba(30,157,229,0.10), 0 1px 4px rgba(0,0,0,0.06);
+    --shadow-lg: 0 10px 40px rgba(30,157,229,0.16), 0 2px 8px rgba(0,0,0,0.08);
+    --radius: 16px;
+    --radius-sm: 10px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: var(--gray-50);
+    color: var(--gray-900);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+  }
+
+  .app-shell {
+    width: 100%;
+    max-width: 430px;
+    min-height: 100vh;
+    background: var(--white);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── SCREENS ── */
+  .screen { display: none; flex-direction: column; flex: 1; overflow-y: auto; padding-bottom: 80px; }
+  .screen.active { display: flex; }
+
+  /* ── HEADER ── */
+  .header-blue {
+    background: linear-gradient(135deg, #1E9DE5 0%, #1580C8 60%, #0D6AAD 100%);
+    padding: 0 20px 32px;
+    position: relative;
+    overflow: hidden;
+  }
+  .header-blue::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 200px; height: 200px;
+    background: rgba(255,255,255,0.07);
+    border-radius: 50%;
+  }
+  .header-blue::after {
+    content: '';
+    position: absolute;
+    bottom: -40px; left: -30px;
+    width: 160px; height: 160px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 50%;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 52px 0 20px;
+  }
+
+  .logo-wrap { display: flex; align-items: center; gap: 10px; }
+  .logo-wrap img { width: 36px; height: 36px; border-radius: 10px; }
+  .logo-text { color: white; font-size: 18px; font-weight: 800; letter-spacing: -0.3px; }
+  .logo-text span { font-weight: 300; opacity: 0.85; }
+
+  .topbar-actions { display: flex; gap: 10px; }
+  .icon-btn {
+    width: 38px; height: 38px;
+    background: rgba(255,255,255,0.18);
+    border-radius: 12px;
+    border: none;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .icon-btn:hover { background: rgba(255,255,255,0.28); }
+  .icon-btn svg { width: 18px; height: 18px; stroke: white; fill: none; }
+
+  /* Balance Card */
+  .balance-card {
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    position: relative;
+    z-index: 1;
+  }
+  .balance-label { color: rgba(255,255,255,0.8); font-size: 12px; font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 4px; }
+  .balance-amount { color: white; font-size: 32px; font-weight: 800; letter-spacing: -1px; line-height: 1; }
+  .balance-amount.hidden { filter: blur(8px); user-select: none; }
+  .balance-row { display: flex; align-items: center; gap: 10px; margin-top: 2px; }
+  .toggle-vis {
+    background: none; border: none; cursor: pointer;
+    color: rgba(255,255,255,0.7);
+    display: flex; align-items: center;
+  }
+  .toggle-vis svg { width: 16px; height: 16px; stroke: currentColor; fill: none; }
+
+  .balance-stats {
+    display: flex; gap: 0;
+    margin-top: 14px;
+    border-top: 1px solid rgba(255,255,255,0.15);
+    padding-top: 12px;
+  }
+  .stat-item { flex: 1; text-align: center; }
+  .stat-item:not(:last-child) { border-right: 1px solid rgba(255,255,255,0.15); }
+  .stat-item .s-label { color: rgba(255,255,255,0.7); font-size: 10px; font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase; }
+  .stat-item .s-val { color: white; font-size: 14px; font-weight: 700; margin-top: 2px; }
+  .stat-item .s-val.inc { color: #7EFFD4; }
+  .stat-item .s-val.exp { color: #FFAAAA; }
+
+  /* Quick Actions */
+  .quick-actions {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    padding: 20px 20px 0;
+  }
+  .qa-item {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    cursor: pointer;
+    padding: 12px 4px;
+    border-radius: var(--radius-sm);
+    transition: background 0.15s;
+  }
+  .qa-item:hover { background: var(--blue-light); }
+  .qa-icon {
+    width: 48px; height: 48px;
+    background: var(--blue-light);
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .qa-icon svg { width: 22px; height: 22px; stroke: var(--blue); fill: none; }
+  .qa-label { font-size: 11px; font-weight: 600; color: var(--gray-700); text-align: center; }
+
+  /* Section */
+  .section { padding: 16px 20px 0; }
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .section-title { font-size: 15px; font-weight: 700; color: var(--gray-900); }
+  .see-all { font-size: 12px; font-weight: 600; color: var(--blue); cursor: pointer; }
+
+  /* Summary Cards */
+  .summary-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 0 20px; }
+  .sum-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--gray-100);
+  }
+  .sum-card.income { border-left: 3px solid var(--green); }
+  .sum-card.expense { border-left: 3px solid var(--red); }
+  .sum-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 8px;
+  }
+  .sum-icon.inc-bg { background: var(--green-light); }
+  .sum-icon.exp-bg { background: var(--red-light); }
+  .sum-icon svg { width: 18px; height: 18px; fill: none; }
+  .sum-icon.inc-bg svg { stroke: var(--green); }
+  .sum-icon.exp-bg svg { stroke: var(--red); }
+  .sum-label { font-size: 10px; font-weight: 600; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.5px; }
+  .sum-val { font-size: 15px; font-weight: 800; margin-top: 2px; }
+  .sum-val.inc { color: var(--green); }
+  .sum-val.exp { color: var(--red); }
+
+  /* Transaction List */
+  .tx-list { display: flex; flex-direction: column; gap: 2px; }
+  .tx-date-group { font-size: 11px; font-weight: 700; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.8px; padding: 12px 20px 6px; }
+  .tx-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 20px;
+    cursor: pointer;
+    transition: background 0.15s;
+    position: relative;
+  }
+  .tx-item:hover { background: var(--gray-50); }
+  .tx-item::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 20px; right: 20px;
+    height: 1px;
+    background: var(--gray-100);
+  }
+  .tx-avatar {
+    width: 44px; height: 44px;
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .tx-info { flex: 1; min-width: 0; }
+  .tx-name { font-size: 14px; font-weight: 600; color: var(--gray-900); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tx-sub { font-size: 11px; font-weight: 500; color: var(--gray-500); margin-top: 2px; }
+  .tx-amount { font-size: 14px; font-weight: 700; }
+  .tx-amount.inc { color: var(--green); }
+  .tx-amount.exp { color: var(--red); }
+
+  /* ── BOTTOM NAV ── */
+  .bottom-nav {
+    position: fixed; bottom: 0;
+    width: 100%; max-width: 430px;
+    background: white;
+    border-top: 1px solid var(--gray-100);
+    display: flex;
+    align-items: center;
+    padding: 10px 0 calc(10px + env(safe-area-inset-bottom));
+    z-index: 100;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.06);
+  }
+  .nav-item {
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
+    cursor: pointer; padding: 4px 0;
+    transition: all 0.2s;
+  }
+  .nav-item svg { width: 22px; height: 22px; stroke: var(--gray-300); fill: none; transition: stroke 0.2s; }
+  .nav-label { font-size: 10px; font-weight: 600; color: var(--gray-300); transition: color 0.2s; }
+  .nav-item.active svg { stroke: var(--blue); }
+  .nav-item.active .nav-label { color: var(--blue); }
+
+  .nav-fab {
+    flex: 0 0 70px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .fab-btn {
+    width: 56px; height: 56px;
+    background: linear-gradient(135deg, #1E9DE5, #0D6AAD);
+    border-radius: 18px;
+    border: none;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 6px 20px rgba(30,157,229,0.4);
+    transform: translateY(-8px);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .fab-btn:hover { transform: translateY(-12px); box-shadow: 0 10px 28px rgba(30,157,229,0.5); }
+  .fab-btn svg { width: 26px; height: 26px; stroke: white; fill: none; stroke-width: 2.5; }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);
+    z-index: 200; align-items: flex-end; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-sheet {
+    background: white; width: 100%; max-width: 430px;
+    border-radius: 24px 24px 0 0;
+    padding: 0 0 calc(24px + env(safe-area-inset-bottom));
+    max-height: 85vh; overflow-y: auto;
+    animation: slideUp 0.3s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .modal-handle { width: 40px; height: 4px; background: var(--gray-200); border-radius: 2px; margin: 12px auto 20px; }
+  .modal-title { font-size: 18px; font-weight: 800; color: var(--gray-900); padding: 0 20px 16px; }
+
+  /* Type Tabs */
+  .type-tabs { display: flex; margin: 0 20px 20px; background: var(--gray-100); border-radius: 12px; padding: 4px; gap: 4px; }
+  .type-tab {
+    flex: 1; padding: 10px; text-align: center;
+    font-size: 13px; font-weight: 700;
+    border-radius: 9px; border: none; background: none;
+    cursor: pointer; transition: all 0.2s;
+    color: var(--gray-500);
+  }
+  .type-tab.income.active { background: var(--green); color: white; }
+  .type-tab.expense.active { background: var(--red); color: white; }
+
+  /* Form */
+  .form-group { padding: 0 20px; margin-bottom: 16px; }
+  .form-label { font-size: 11px; font-weight: 700; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: block; }
+  .form-input {
+    width: 100%; padding: 14px 16px;
+    border: 1.5px solid var(--gray-200);
+    border-radius: 12px; font-size: 15px; font-family: inherit;
+    color: var(--gray-900); background: var(--white);
+    transition: border-color 0.2s;
+    outline: none;
+  }
+  .form-input:focus { border-color: var(--blue); }
+  .amount-input-wrap { position: relative; }
+  .amount-prefix { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); font-size: 15px; font-weight: 700; color: var(--gray-500); }
+  .amount-input-wrap .form-input { padding-left: 44px; }
+
+  .category-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .cat-item {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    padding: 10px 4px; border-radius: 12px; border: 1.5px solid var(--gray-200);
+    cursor: pointer; transition: all 0.2s; background: var(--white);
+  }
+  .cat-item.selected { border-color: var(--blue); background: var(--blue-light); }
+  .cat-item .cat-emoji { font-size: 20px; }
+  .cat-item .cat-name { font-size: 9px; font-weight: 600; color: var(--gray-700); text-align: center; }
+  .cat-item.selected .cat-name { color: var(--blue); }
+
+  .submit-btn {
+    margin: 8px 20px 0;
+    width: calc(100% - 40px);
+    padding: 16px;
+    background: linear-gradient(135deg, #1E9DE5, #0D6AAD);
+    color: white; font-size: 15px; font-weight: 700;
+    border: none; border-radius: 14px; cursor: pointer;
+    font-family: inherit;
+    box-shadow: 0 6px 20px rgba(30,157,229,0.35);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .submit-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(30,157,229,0.45); }
+  .submit-btn:active { transform: translateY(0); }
+
+  /* ── CALCULATOR ── */
+  .calc-screen {
+    background: var(--gray-900);
+    margin: 16px 20px;
+    border-radius: var(--radius);
+    padding: 20px;
+    text-align: right;
+    min-height: 110px;
+    display: flex; flex-direction: column; justify-content: flex-end;
+  }
+  .calc-expr { font-size: 14px; color: var(--gray-500); min-height: 20px; margin-bottom: 4px; word-break: break-all; }
+  .calc-result { font-size: 42px; font-weight: 800; color: white; letter-spacing: -1px; word-break: break-all; }
+  .calc-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 0 20px; }
+  .calc-btn {
+    height: 70px; border-radius: 16px; border: none;
+    font-size: 20px; font-weight: 700; cursor: pointer;
+    font-family: inherit; transition: transform 0.1s, filter 0.1s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .calc-btn:active { transform: scale(0.93); filter: brightness(0.9); }
+  .calc-btn.num { background: var(--white); color: var(--gray-900); box-shadow: var(--shadow-sm); }
+  .calc-btn.op { background: var(--blue-light); color: var(--blue); }
+  .calc-btn.eq { background: linear-gradient(135deg, #1E9DE5, #0D6AAD); color: white; box-shadow: 0 4px 16px rgba(30,157,229,0.35); }
+  .calc-btn.clear { background: var(--red-light); color: var(--red); }
+  .calc-btn.zero { grid-column: span 2; }
+  .calc-btn.del { background: var(--gray-100); color: var(--gray-700); }
+
+  /* ── ACTIVITY SCREEN ── */
+  .act-header {
+    background: linear-gradient(135deg, #1E9DE5, #0D6AAD);
+    padding: 52px 20px 20px;
+    position: sticky; top: 0; z-index: 10;
+  }
+  .act-title { color: white; font-size: 20px; font-weight: 800; margin-bottom: 12px; }
+  .search-bar {
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 12px;
+    padding: 11px 14px;
+  }
+  .search-bar svg { width: 16px; height: 16px; stroke: rgba(255,255,255,0.8); fill: none; flex-shrink: 0; }
+  .search-bar input {
+    background: none; border: none; outline: none;
+    color: white; font-family: inherit; font-size: 14px; flex: 1;
+  }
+  .search-bar input::placeholder { color: rgba(255,255,255,0.6); }
+
+  /* Filter Chips */
+  .filter-bar {
+    display: flex; gap: 8px;
+    padding: 12px 20px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    background: white;
+    border-bottom: 1px solid var(--gray-100);
+    position: sticky; top: 108px; z-index: 9;
+  }
+  .filter-bar::-webkit-scrollbar { display: none; }
+  .filter-chip {
+    display: flex; align-items: center; gap: 4px;
+    padding: 6px 14px; border-radius: 20px; white-space: nowrap;
+    font-size: 12px; font-weight: 600; border: 1.5px solid var(--gray-200);
+    background: white; color: var(--gray-700); cursor: pointer;
+    transition: all 0.2s;
+  }
+  .filter-chip.active { background: var(--blue); border-color: var(--blue); color: white; }
+
+  /* Empty State */
+  .empty-state { text-align: center; padding: 60px 40px; }
+  .empty-state .e-emoji { font-size: 56px; margin-bottom: 16px; }
+  .empty-state .e-title { font-size: 17px; font-weight: 700; color: var(--gray-700); margin-bottom: 6px; }
+  .empty-state .e-sub { font-size: 13px; color: var(--gray-500); line-height: 1.5; }
+
+  /* Profile Screen */
+  .profile-header {
+    background: linear-gradient(135deg, #1E9DE5, #0D6AAD);
+    padding: 52px 20px 28px;
+  }
+  .profile-avatar {
+    width: 72px; height: 72px;
+    background: rgba(255,255,255,0.25);
+    border-radius: 22px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px;
+    border: 2px solid rgba(255,255,255,0.4);
+    margin-bottom: 12px;
+  }
+  .profile-name { color: white; font-size: 20px; font-weight: 800; }
+  .profile-email { color: rgba(255,255,255,0.75); font-size: 13px; margin-top: 2px; }
+
+  .menu-list { padding: 16px 20px; display: flex; flex-direction: column; gap: 8px; }
+  .menu-item {
+    display: flex; align-items: center; gap: 14px;
+    padding: 16px; background: white;
+    border-radius: var(--radius-sm); cursor: pointer;
+    border: 1px solid var(--gray-100);
+    transition: box-shadow 0.2s;
+  }
+  .menu-item:hover { box-shadow: var(--shadow-sm); }
+  .menu-icon { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .menu-icon svg { width: 20px; height: 20px; fill: none; }
+  .menu-text { flex: 1; }
+  .menu-text .m-title { font-size: 14px; font-weight: 600; color: var(--gray-900); }
+  .menu-text .m-sub { font-size: 11px; color: var(--gray-500); margin-top: 1px; }
+  .menu-arrow { color: var(--gray-300); }
+  .menu-arrow svg { width: 16px; height: 16px; stroke: currentColor; fill: none; }
+
+  /* Wallet Screen */
+  .wallet-card {
+    margin: 16px 20px;
+    background: linear-gradient(135deg, #1E9DE5, #0D6AAD);
+    border-radius: var(--radius);
+    padding: 24px;
+    color: white;
+    position: relative;
+    overflow: hidden;
+  }
+  .wallet-card::before {
+    content: '';
+    position: absolute; top: -40px; right: -40px;
+    width: 140px; height: 140px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 50%;
+  }
+  .wc-label { font-size: 11px; opacity: 0.8; font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase; }
+  .wc-amount { font-size: 34px; font-weight: 800; margin: 4px 0 20px; letter-spacing: -1px; }
+  .wc-row { display: flex; gap: 24px; }
+  .wc-item .wi-label { font-size: 10px; opacity: 0.7; font-weight: 500; }
+  .wc-item .wi-val { font-size: 14px; font-weight: 700; margin-top: 2px; }
+
+  /* Chart Bar */
+  .chart-wrap { padding: 0 20px 20px; }
+  .chart-title { font-size: 15px; font-weight: 700; color: var(--gray-900); margin-bottom: 16px; }
+  .bar-chart { display: flex; align-items: flex-end; gap: 8px; height: 120px; }
+  .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+  .bar { width: 100%; border-radius: 6px 6px 0 0; transition: height 0.5s ease; min-height: 4px; }
+  .bar.inc-bar { background: linear-gradient(to top, #10B981, #34D399); }
+  .bar.exp-bar { background: linear-gradient(to top, #EF4444, #FC8181); }
+  .bar-lbl { font-size: 9px; font-weight: 600; color: var(--gray-500); }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
+    background: var(--gray-900); color: white;
+    padding: 12px 20px; border-radius: 12px;
+    font-size: 13px; font-weight: 600;
+    z-index: 300;
+    opacity: 0; transition: opacity 0.3s;
+    white-space: nowrap;
+    box-shadow: var(--shadow-lg);
+  }
+  .toast.show { opacity: 1; }
+
+  /* Utilities */
+  .chip-badge {
+    display: inline-flex; align-items: center;
+    padding: 3px 8px; border-radius: 6px;
+    font-size: 10px; font-weight: 700;
+  }
+  .chip-badge.inc { background: var(--green-light); color: var(--green); }
+  .chip-badge.exp { background: var(--red-light); color: var(--red); }
+
+  @media (min-width: 431px) {
+    .app-shell { box-shadow: 0 0 60px rgba(0,0,0,0.15); margin: 0 auto; }
+  }
+</style>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- ══ HOME SCREEN ══ -->
+  <div class="screen active" id="screen-home">
+    <div class="header-blue">
+      <div class="topbar">
+        <div class="logo-wrap">
+          <img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAJZGVzYwAAAPAAAA..." alt="AF" id="logo-img">
+          <span class="logo-text">Arta<span>Flow</span></span>
+        </div>
+        <div class="topbar-actions">
+          <button class="icon-btn">
+            <svg viewBox="0 0 24 24" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          </button>
+          <button class="icon-btn">
+            <svg viewBox="0 0 24 24" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="balance-card">
+        <div class="balance-label">Saldo Bersih</div>
+        <div class="balance-row">
+          <div class="balance-amount" id="main-balance">Rp 0</div>
+          <button class="toggle-vis" onclick="toggleVisibility()">
+            <svg id="eye-icon" viewBox="0 0 24 24" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <div class="balance-stats">
+          <div class="stat-item">
+            <div class="s-label">Pemasukan</div>
+            <div class="s-val inc" id="hdr-income">Rp 0</div>
+          </div>
+          <div class="stat-item">
+            <div class="s-label">Pengeluaran</div>
+            <div class="s-val exp" id="hdr-expense">Rp 0</div>
+          </div>
+          <div class="stat-item">
+            <div class="s-label">Transaksi</div>
+            <div class="s-val" id="hdr-tx-count">0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+      <div class="qa-item" onclick="openModal('income')">
+        <div class="qa-icon">
+          <svg viewBox="0 0 24 24" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </div>
+        <span class="qa-label">Tambah</span>
+      </div>
+      <div class="qa-item" onclick="switchScreen('activity')">
+        <div class="qa-icon">
+          <svg viewBox="0 0 24 24" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </div>
+        <span class="qa-label">Aktivitas</span>
+      </div>
+      <div class="qa-item" onclick="switchScreen('wallet')">
+        <div class="qa-icon">
+          <svg viewBox="0 0 24 24" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        </div>
+        <span class="qa-label">Laporan</span>
+      </div>
+      <div class="qa-item" onclick="switchScreen('calc')">
+        <div class="qa-icon">
+          <svg viewBox="0 0 24 24" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="8" y2="10"/><line x1="12" y1="10" x2="12" y2="10"/><line x1="16" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="8" y2="14"/><line x1="12" y1="14" x2="12" y2="14"/><line x1="16" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="12" y2="18"/></svg>
+        </div>
+        <span class="qa-label">Kalkulator</span>
+      </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="section" style="padding-bottom:8px;">
+      <div class="section-header">
+        <span class="section-title">Bulan Ini</span>
+        <span class="see-all" onclick="switchScreen('wallet')">Lihat Laporan →</span>
+      </div>
+    </div>
+    <div class="summary-cards">
+      <div class="sum-card income">
+        <div class="sum-icon inc-bg">
+          <svg viewBox="0 0 24 24" stroke-width="2.5"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+        </div>
+        <div class="sum-label">Pemasukan</div>
+        <div class="sum-val inc" id="card-income">Rp 0</div>
+      </div>
+      <div class="sum-card expense">
+        <div class="sum-icon exp-bg">
+          <svg viewBox="0 0 24 24" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+        </div>
+        <div class="sum-label">Pengeluaran</div>
+        <div class="sum-val exp" id="card-expense">Rp 0</div>
+      </div>
+    </div>
+
+    <!-- Recent Transactions -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">Transaksi Terbaru</span>
+        <span class="see-all" onclick="switchScreen('activity')">Lihat Semua</span>
+      </div>
+    </div>
+    <div id="home-tx-list" class="tx-list">
+      <div class="empty-state">
+        <div class="e-emoji">💸</div>
+        <div class="e-title">Belum ada transaksi</div>
+        <div class="e-sub">Tap tombol + di bawah untuk<br>menambahkan transaksi pertamamu</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ ACTIVITY SCREEN ══ -->
+  <div class="screen" id="screen-activity">
+    <div class="act-header">
+      <div class="act-title">Aktivitas</div>
+      <div class="search-bar">
+        <svg viewBox="0 0 24 24" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="search-input" placeholder="Cari transaksi..." oninput="filterTransactions()">
+      </div>
+    </div>
+    <div class="filter-bar">
+      <div class="filter-chip active" onclick="setFilter('all', this)">Semua</div>
+      <div class="filter-chip" onclick="setFilter('income', this)">Pemasukan</div>
+      <div class="filter-chip" onclick="setFilter('expense', this)">Pengeluaran</div>
+    </div>
+    <div id="activity-list" class="tx-list" style="flex:1;">
+      <div class="empty-state">
+        <div class="e-emoji">📋</div>
+        <div class="e-title">Belum ada aktivitas</div>
+        <div class="e-sub">Semua transaksimu akan muncul di sini</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ WALLET / REPORT SCREEN ══ -->
+  <div class="screen" id="screen-wallet">
+    <div class="act-header" style="padding-bottom:20px;">
+      <div class="act-title">Laporan Keuangan</div>
+    </div>
+
+    <div class="wallet-card">
+      <div class="wc-label">Total Saldo</div>
+      <div class="wc-amount" id="wallet-balance">Rp 0</div>
+      <div class="wc-row">
+        <div class="wc-item">
+          <div class="wi-label">Total Pemasukan</div>
+          <div class="wi-val" id="wallet-income">Rp 0</div>
+        </div>
+        <div class="wc-item">
+          <div class="wi-label">Total Pengeluaran</div>
+          <div class="wi-val" id="wallet-expense">Rp 0</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-wrap">
+      <div class="chart-title">Grafik 6 Bulan Terakhir</div>
+      <div class="bar-chart" id="bar-chart"></div>
+      <div style="display:flex;gap:16px;margin-top:12px;justify-content:center;">
+        <div style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--gray-500);">
+          <div style="width:10px;height:10px;background:var(--green);border-radius:3px;"></div>Pemasukan
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--gray-500);">
+          <div style="width:10px;height:10px;background:var(--red);border-radius:3px;"></div>Pengeluaran
+        </div>
+      </div>
+    </div>
+
+    <!-- Category breakdown -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">Kategori Terbanyak</span>
+      </div>
+    </div>
+    <div id="category-breakdown" style="padding:0 20px 20px;display:flex;flex-direction:column;gap:10px;"></div>
+  </div>
+
+  <!-- ══ CALCULATOR SCREEN ══ -->
+  <div class="screen" id="screen-calc">
+    <div class="act-header">
+      <div class="act-title">Kalkulator</div>
+    </div>
+    <div class="calc-screen">
+      <div class="calc-expr" id="calc-expr"></div>
+      <div class="calc-result" id="calc-result">0</div>
+    </div>
+    <div class="calc-grid">
+      <button class="calc-btn clear" onclick="calcClear()">C</button>
+      <button class="calc-btn del" onclick="calcDel()">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/><line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/></svg>
+      </button>
+      <button class="calc-btn op" onclick="calcOp('%')">%</button>
+      <button class="calc-btn op" onclick="calcOp('/')">÷</button>
+
+      <button class="calc-btn num" onclick="calcNum('7')">7</button>
+      <button class="calc-btn num" onclick="calcNum('8')">8</button>
+      <button class="calc-btn num" onclick="calcNum('9')">9</button>
+      <button class="calc-btn op" onclick="calcOp('*')">×</button>
+
+      <button class="calc-btn num" onclick="calcNum('4')">4</button>
+      <button class="calc-btn num" onclick="calcNum('5')">5</button>
+      <button class="calc-btn num" onclick="calcNum('6')">6</button>
+      <button class="calc-btn op" onclick="calcOp('-')">−</button>
+
+      <button class="calc-btn num" onclick="calcNum('1')">1</button>
+      <button class="calc-btn num" onclick="calcNum('2')">2</button>
+      <button class="calc-btn num" onclick="calcNum('3')">3</button>
+      <button class="calc-btn op" onclick="calcOp('+')">+</button>
+
+      <button class="calc-btn num zero" onclick="calcNum('0')">0</button>
+      <button class="calc-btn num" onclick="calcDot()">.</button>
+      <button class="calc-btn eq" onclick="calcEqual()">=</button>
+    </div>
+    <div style="padding:16px 20px 0;">
+      <button class="submit-btn" onclick="useCalcResult()" style="background:var(--green);box-shadow:0 6px 20px rgba(16,185,129,0.35);">
+        Gunakan Hasil sebagai Nominal
+      </button>
+    </div>
+  </div>
+
+  <!-- ══ BOTTOM NAV ══ -->
+  <nav class="bottom-nav">
+    <div class="nav-item active" id="nav-home" onclick="switchScreen('home')">
+      <svg viewBox="0 0 24 24" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span class="nav-label">Home</span>
+    </div>
+    <div class="nav-item" id="nav-activity" onclick="switchScreen('activity')">
+      <svg viewBox="0 0 24 24" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      <span class="nav-label">Aktivitas</span>
+    </div>
+    <div class="nav-fab">
+      <button class="fab-btn" onclick="openModal('expense')">
+        <svg viewBox="0 0 24 24" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+    </div>
+    <div class="nav-item" id="nav-wallet" onclick="switchScreen('wallet')">
+      <svg viewBox="0 0 24 24" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+      <span class="nav-label">Laporan</span>
+    </div>
+    <div class="nav-item" id="nav-calc" onclick="switchScreen('calc')">
+      <svg viewBox="0 0 24 24" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><rect x="8" y="10" width="2" height="2"/><rect x="11" y="10" width="2" height="2"/><rect x="14" y="10" width="2" height="2"/><rect x="8" y="14" width="2" height="2"/><rect x="11" y="14" width="2" height="2"/><rect x="14" y="14" width="2" height="2"/><rect x="8" y="18" width="5" height="2"/></svg>
+      <span class="nav-label">Kalkulator</span>
+    </div>
+  </nav>
+
+</div>
+
+<!-- ══ ADD TRANSACTION MODAL ══ -->
+<div class="modal-overlay" id="add-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Tambah Transaksi</div>
+
+    <div class="type-tabs">
+      <button class="type-tab income active" id="tab-income" onclick="setModalType('income')">Pemasukan</button>
+      <button class="type-tab expense" id="tab-expense" onclick="setModalType('expense')">Pengeluaran</button>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Nominal</label>
+      <div class="amount-input-wrap">
+        <span class="amount-prefix">Rp</span>
+        <input type="number" class="form-input" id="amount-input" placeholder="0" min="0">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Deskripsi</label>
+      <input type="text" class="form-input" id="desc-input" placeholder="Contoh: Gaji bulan ini">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Kategori</label>
+      <div class="category-grid" id="category-grid"></div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Tanggal</label>
+      <input type="date" class="form-input" id="date-input">
+    </div>
+
+    <button class="submit-btn" onclick="addTransaction()">Simpan Transaksi</button>
+    <div style="height:8px;"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── STATE ──
+let transactions = JSON.parse(localStorage.getItem('artaflow_tx') || '[]');
+let modalType = 'income';
+let selectedCategory = '';
+let calcExpr = '';
+let calcCurrent = '0';
+let calcNewNum = true;
+let filterMode = 'all';
+let balanceVisible = true;
+
+const CATEGORIES = {
+  income:  [
+    {id:'salary',   emoji:'💼', name:'Gaji'},
+    {id:'business', emoji:'🏪', name:'Usaha'},
+    {id:'gift',     emoji:'🎁', name:'Hadiah'},
+    {id:'invest',   emoji:'📈', name:'Investasi'},
+    {id:'freelance',emoji:'💻', name:'Freelance'},
+    {id:'bonus',    emoji:'🌟', name:'Bonus'},
+    {id:'other_in', emoji:'💰', name:'Lainnya'},
+  ],
+  expense: [
+    {id:'food',     emoji:'🍜', name:'Makan'},
+    {id:'transport',emoji:'🚗', name:'Transportasi'},
+    {id:'shopping', emoji:'🛍️', name:'Belanja'},
+    {id:'health',   emoji:'💊', name:'Kesehatan'},
+    {id:'bills',    emoji:'⚡', name:'Tagihan'},
+    {id:'entertain',emoji:'🎮', name:'Hiburan'},
+    {id:'edu',      emoji:'📚', name:'Pendidikan'},
+    {id:'other_ex', emoji:'📦', name:'Lainnya'},
+  ]
+};
+
+// ── UTILS ──
+function fmt(n) {
+  if(n === undefined || n === null) return 'Rp 0';
+  return 'Rp ' + Math.abs(Math.round(n)).toLocaleString('id-ID');
+}
+function fmtSigned(n) {
+  return (n >= 0 ? '+' : '-') + ' Rp ' + Math.abs(Math.round(n)).toLocaleString('id-ID');
+}
+function saveData() { localStorage.setItem('artaflow_tx', JSON.stringify(transactions)); }
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function calcTotals() {
+  const now = new Date();
+  const thisMonth = now.toISOString().slice(0,7);
+  let totalIncome = 0, totalExpense = 0;
+  let monthIncome = 0, monthExpense = 0;
+  transactions.forEach(tx => {
+    if(tx.type === 'income') { totalIncome += tx.amount; if(tx.date.startsWith(thisMonth)) monthIncome += tx.amount; }
+    else { totalExpense += tx.amount; if(tx.date.startsWith(thisMonth)) monthExpense += tx.amount; }
+  });
+  return { totalIncome, totalExpense, balance: totalIncome - totalExpense, monthIncome, monthExpense };
+}
+
+// ── SCREENS ──
+function switchScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  const navEl = document.getElementById('nav-' + name);
+  if(navEl) navEl.classList.add('active');
+  if(name === 'home') renderHome();
+  if(name === 'activity') renderActivity();
+  if(name === 'wallet') renderWallet();
+}
+
+// ── VISIBILITY ──
+function toggleVisibility() {
+  balanceVisible = !balanceVisible;
+  const el = document.getElementById('main-balance');
+  el.classList.toggle('hidden', !balanceVisible);
+  document.getElementById('eye-icon').innerHTML = balanceVisible
+    ? '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>'
+    : '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>';
+}
+
+// ── RENDER HOME ──
+function renderHome() {
+  const { totalIncome, totalExpense, balance, monthIncome, monthExpense } = calcTotals();
+  document.getElementById('main-balance').textContent = fmt(balance);
+  document.getElementById('hdr-income').textContent = fmt(totalIncome);
+  document.getElementById('hdr-expense').textContent = fmt(totalExpense);
+  document.getElementById('hdr-tx-count').textContent = transactions.length;
+  document.getElementById('card-income').textContent = fmt(monthIncome);
+  document.getElementById('card-expense').textContent = fmt(monthExpense);
+
+  const list = document.getElementById('home-tx-list');
+  const recent = [...transactions].sort((a,b) => new Date(b.date+' '+b.time) - new Date(a.date+' '+a.time)).slice(0,5);
+  if(!recent.length) {
+    list.innerHTML = `<div class="empty-state"><div class="e-emoji">💸</div><div class="e-title">Belum ada transaksi</div><div class="e-sub">Tap tombol + di bawah untuk<br>menambahkan transaksi pertamamu</div></div>`;
+  } else {
+    list.innerHTML = recent.map(tx => txItemHtml(tx)).join('');
+  }
+}
+
+function txItemHtml(tx) {
+  const cat = [...CATEGORIES.income, ...CATEGORIES.expense].find(c => c.id === tx.category) || {emoji:'💳',name:'Lainnya'};
+  const d = new Date(tx.date);
+  const dateStr = d.toLocaleDateString('id-ID', {day:'numeric',month:'short',year:'numeric'});
+  return `<div class="tx-item">
+    <div class="tx-avatar" style="background:${tx.type==='income'?'#D1FAE5':'#FEE2E2'}">${cat.emoji}</div>
+    <div class="tx-info">
+      <div class="tx-name">${tx.desc || cat.name}</div>
+      <div class="tx-sub">${dateStr} • ${tx.time} &nbsp;<span class="chip-badge ${tx.type==='income'?'inc':'exp'}">${cat.name}</span></div>
+    </div>
+    <div class="tx-amount ${tx.type==='income'?'inc':'exp'}">${tx.type==='income'?'+':'-'}${fmt(tx.amount)}</div>
+  </div>`;
+}
+
+// ── RENDER ACTIVITY ──
+function renderActivity() {
+  const q = (document.getElementById('search-input').value || '').toLowerCase();
+  let list = [...transactions].sort((a,b) => new Date(b.date+' '+b.time) - new Date(a.date+' '+a.time));
+  if(filterMode !== 'all') list = list.filter(t => t.type === filterMode);
+  if(q) list = list.filter(t => (t.desc||'').toLowerCase().includes(q) || t.category.toLowerCase().includes(q));
+
+  const container = document.getElementById('activity-list');
+  if(!list.length) {
+    container.innerHTML = `<div class="empty-state"><div class="e-emoji">🔍</div><div class="e-title">Tidak ditemukan</div><div class="e-sub">Coba kata kunci atau filter yang berbeda</div></div>`;
+    return;
+  }
+
+  // Group by date
+  const groups = {};
+  list.forEach(tx => {
+    const key = tx.date;
+    if(!groups[key]) groups[key] = [];
+    groups[key].push(tx);
+  });
+
+  container.innerHTML = Object.entries(groups).sort((a,b) => b[0].localeCompare(a[0])).map(([date, txs]) => {
+    const d = new Date(date);
+    const label = d.toLocaleDateString('id-ID', {weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    return `<div class="tx-date-group">${label}</div>` + txs.map(tx => txItemHtml(tx)).join('');
+  }).join('');
+}
+
+function filterTransactions() { renderActivity(); }
+function setFilter(mode, el) {
+  filterMode = mode;
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderActivity();
+}
+
+// ── RENDER WALLET ──
+function renderWallet() {
+  const { totalIncome, totalExpense, balance } = calcTotals();
+  document.getElementById('wallet-balance').textContent = fmt(balance);
+  document.getElementById('wallet-income').textContent = fmt(totalIncome);
+  document.getElementById('wallet-expense').textContent = fmt(totalExpense);
+  renderChart();
+  renderCategoryBreakdown();
+}
+
+function renderChart() {
+  const months = [];
+  for(let i=5; i>=0; i--) {
+    const d = new Date(); d.setMonth(d.getMonth()-i);
+    months.push({ key: d.toISOString().slice(0,7), label: d.toLocaleDateString('id-ID',{month:'short'}) });
+  }
+
+  const data = months.map(m => {
+    let inc = 0, exp = 0;
+    transactions.forEach(tx => {
+      if(tx.date.startsWith(m.key)) {
+        if(tx.type==='income') inc += tx.amount; else exp += tx.amount;
+      }
+    });
+    return {label: m.label, inc, exp};
+  });
+
+  const maxVal = Math.max(...data.map(d => Math.max(d.inc, d.exp)), 1);
+  const chartEl = document.getElementById('bar-chart');
+  chartEl.innerHTML = data.map(d => `
+    <div class="bar-col">
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;width:100%;">
+        <div class="bar inc-bar" style="height:${(d.inc/maxVal)*90}px;"></div>
+        <div class="bar exp-bar" style="height:${(d.exp/maxVal)*90}px;"></div>
+      </div>
+      <div class="bar-lbl">${d.label}</div>
+    </div>`).join('');
+}
+
+function renderCategoryBreakdown() {
+  const catMap = {};
+  transactions.filter(t => t.type==='expense').forEach(t => {
+    catMap[t.category] = (catMap[t.category] || 0) + t.amount;
+  });
+  const sorted = Object.entries(catMap).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const total = sorted.reduce((s,[,v])=>s+v,0)||1;
+  const allCats = [...CATEGORIES.income, ...CATEGORIES.expense];
+  const cont = document.getElementById('category-breakdown');
+
+  if(!sorted.length) { cont.innerHTML = `<div style="text-align:center;padding:20px;color:var(--gray-500);font-size:13px;">Belum ada data pengeluaran</div>`; return; }
+  cont.innerHTML = sorted.map(([id, amt]) => {
+    const cat = allCats.find(c=>c.id===id)||{emoji:'📦',name:'Lainnya'};
+    const pct = Math.round(amt/total*100);
+    return `<div style="background:white;border-radius:12px;padding:14px;border:1px solid var(--gray-100);box-shadow:var(--shadow-sm);">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <span style="font-size:22px;">${cat.emoji}</span>
+        <div style="flex:1;">
+          <div style="font-size:13px;font-weight:700;color:var(--gray-900);">${cat.name}</div>
+          <div style="font-size:11px;color:var(--gray-500);">${pct}% dari total pengeluaran</div>
+        </div>
+        <div style="font-size:14px;font-weight:700;color:var(--red);">${fmt(amt)}</div>
+      </div>
+      <div style="height:6px;background:var(--gray-100);border-radius:3px;overflow:hidden;">
+        <div style="height:100%;width:${pct}%;background:linear-gradient(to right,#EF4444,#FC8181);border-radius:3px;transition:width 0.6s ease;"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── MODAL ──
+function openModal(type) {
+  modalType = type;
+  setModalType(type);
+  document.getElementById('amount-input').value = '';
+  document.getElementById('desc-input').value = '';
+  document.getElementById('date-input').value = new Date().toISOString().split('T')[0];
+  selectedCategory = '';
+  document.getElementById('add-modal').classList.add('open');
+}
+
+function setModalType(type) {
+  modalType = type;
+  document.getElementById('tab-income').classList.toggle('active', type==='income');
+  document.getElementById('tab-expense').classList.toggle('active', type==='expense');
+  renderCategories();
+}
+
+function renderCategories() {
+  const grid = document.getElementById('category-grid');
+  grid.innerHTML = CATEGORIES[modalType].map(c =>
+    `<div class="cat-item${selectedCategory===c.id?' selected':''}" onclick="selectCategory('${c.id}')">
+      <span class="cat-emoji">${c.emoji}</span>
+      <span class="cat-name">${c.name}</span>
+    </div>`).join('');
+}
+
+function selectCategory(id) {
+  selectedCategory = id;
+  renderCategories();
+}
+
+document.getElementById('add-modal').addEventListener('click', function(e) {
+  if(e.target === this) this.classList.remove('open');
+});
+
+function addTransaction() {
+  const amount = parseFloat(document.getElementById('amount-input').value);
+  const desc = document.getElementById('desc-input').value.trim();
+  const date = document.getElementById('date-input').value;
+  if(!amount || amount <= 0) { showToast('⚠️ Masukkan nominal yang valid'); return; }
+  if(!selectedCategory) { showToast('⚠️ Pilih kategori terlebih dahulu'); return; }
+  if(!date) { showToast('⚠️ Pilih tanggal'); return; }
+
+  const now = new Date();
+  transactions.push({
+    id: Date.now(),
+    type: modalType,
+    amount,
+    desc: desc || null,
+    category: selectedCategory,
+    date,
+    time: now.toTimeString().slice(0,5)
+  });
+  saveData();
+  document.getElementById('add-modal').classList.remove('open');
+  showToast('✅ Transaksi berhasil ditambahkan!');
+  renderHome();
+}
+
+// ── CALCULATOR ──
+function calcDisplay() {
+  document.getElementById('calc-expr').textContent = calcExpr;
+  document.getElementById('calc-result').textContent = calcCurrent;
+}
+function calcNum(n) {
+  if(calcNewNum) { calcCurrent = n; calcNewNum = false; }
+  else { if(calcCurrent === '0') calcCurrent = n; else calcCurrent += n; }
+  calcDisplay();
+}
+function calcDot() {
+  if(calcNewNum) { calcCurrent = '0.'; calcNewNum = false; }
+  else if(!calcCurrent.includes('.')) calcCurrent += '.';
+  calcDisplay();
+}
+function calcOp(op) {
+  calcExpr = calcCurrent + ' ' + op + ' ';
+  calcNewNum = true;
+  document.getElementById('calc-expr').textContent = calcExpr;
+}
+function calcClear() { calcExpr=''; calcCurrent='0'; calcNewNum=true; calcDisplay(); }
+function calcDel() {
+  if(calcCurrent.length > 1) calcCurrent = calcCurrent.slice(0,-1);
+  else { calcCurrent='0'; calcNewNum=true; }
+  calcDisplay();
+}
+function calcEqual() {
+  if(!calcExpr) return;
+  try {
+    const expr = calcExpr + calcCurrent;
+    const result = Function('"use strict"; return (' + expr.replace(/÷/g,'/').replace(/×/g,'*') + ')')();
+    calcExpr = expr + ' =';
+    calcCurrent = parseFloat(result.toFixed(10)).toString();
+    calcNewNum = true;
+    calcDisplay();
+  } catch(e) { calcCurrent = 'Error'; calcDisplay(); }
+}
+function useCalcResult() {
+  const val = parseFloat(calcCurrent);
+  if(!isNaN(val) && val > 0) {
+    openModal('expense');
+    setTimeout(() => { document.getElementById('amount-input').value = val; }, 100);
+    switchScreen('home');
+    showToast('✅ Nominal ' + fmt(val) + ' siap digunakan');
+  } else {
+    showToast('⚠️ Hasil kalkulator tidak valid');
+  }
+}
+
+// ── INIT ──
+// Set logo image
+document.getElementById('logo-img').src = 'data:image/jpeg;base64,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';
+
+renderHome();
+
+// Sample data for demo
+if(!transactions.length) {
+  const samples = [
+    {id:1,type:'income',amount:5000000,desc:'Gaji Januari',category:'salary',date:'2026-01-05',time:'09:00'},
+    {id:2,type:'expense',amount:75000,desc:'Makan Siang',category:'food',date:'2026-01-06',time:'12:30'},
+    {id:3,type:'expense',amount:50000,desc:'Bensin',category:'transport',date:'2026-01-07',time:'08:15'},
+    {id:4,type:'income',amount:500000,desc:'Freelance Design',category:'freelance',date:'2026-01-08',time:'14:00'},
+    {id:5,type:'expense',amount:120000,desc:'Belanja Bulanan',category:'shopping',date:'2026-01-10',time:'16:45'},
+    {id:6,type:'expense',amount:150000,desc:'Tagihan Listrik',category:'bills',date:'2026-01-15',time:'10:00'},
+    {id:7,type:'income',amount:200000,desc:'Hadiah',category:'gift',date:'2025-12-25',time:'18:00'},
+    {id:8,type:'expense',amount:89000,desc:'Netflix',category:'entertain',date:'2025-12-01',time:'20:00'},
+  ];
+  transactions = samples;
+  saveData();
+  renderHome();
+}
+</script>
+</body>
+</html>
